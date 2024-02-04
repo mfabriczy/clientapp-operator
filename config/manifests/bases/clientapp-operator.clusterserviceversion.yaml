@@ -1,0 +1,48 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: clientapp-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: ClientApp is the Schema for the clientapps API
+      displayName: Client App
+      kind: ClientApp
+      name: clientapps.app.mfabriczy
+      version: v1
+  description: The ClientApp Operator automates the managementof the ClientApp application.
+  displayName: ClientApp Operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - ClientApp
+  - Kubernetes
+  links:
+  - name: Clientapp Operator
+    url: https://clientapp-operator.domain
+  maintainers:
+  - email: marcusfabriczy@gmail.com
+    name: Marcus Fabriczy
+  maturity: alpha
+  provider:
+    name: Marcus Fabriczy
+  version: 0.0.0
