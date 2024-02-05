@@ -31,14 +31,31 @@ type ClientAppSpec struct {
 
 	// Foo is an example field of ClientApp. Edit clientapp_types.go to remove/update
 	//Foo string `json:"foo,omitempty"`
-	Name      string                      `json:"name,omitempty"`
-	Image     string                      `json:"image,omitempty"`
-	Replicas  int32                       `json:"replicas,omitempty"`
-	Env       []corev1.EnvVar             `json:"env,omitempty"`
-	Port      int32                       `json:"port,omitempty"`
-	PortName  string                      `json:"portname,omitempty"`
-	Host      string                      `json:"host,omitempty"`
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	Name      	string                      `json:"name,omitempty"`
+
+	// +optional
+	// +kubebuilder:default:="nginx:1.25"
+	Image     	string                      `json:"image,omitempty"`
+
+	// +optional
+	// +kubebuilder:default:=1
+	Replicas  	int32                       `json:"replicas,omitempty"`
+	Env       	[]corev1.EnvVar             `json:"env,omitempty"`
+
+	// +optional
+	// +kubebuilder:default:=8080
+	Port      	int32                       `json:"port,omitempty"`
+
+	// +optional
+	// +kubebuilder:default:="http"
+	PortName  	string                      `json:"portname,omitempty"`
+	Host      	string                      `json:"host,omitempty"`
+	Resources 	corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// +optional
+	LastUpdated metav1.Time                 `json:"lastUpdated,omitempty"`
+	LivenessProbe  *corev1.Probe            `json:"livenessProbe,omitempty"`
+	ReadinessProbe *corev1.Probe            `json:"readinessProbe,omitempty"`
 }
 
 // ClientAppStatus defines the observed state of ClientApp

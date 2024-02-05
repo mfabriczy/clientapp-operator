@@ -64,12 +64,16 @@ func (r *ClientAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err := r.Get(ctx, req.NamespacedName, clientApp)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("clientApp resource not found", "namespace", req.NamespacedName.Namespace, "name", req.NamespacedName.Name)
+			log.Info("ClientApp resource not found", "namespace", req.NamespacedName.Namespace, "name", req.NamespacedName.Name)
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "Failed to get clientApp resource", "namespace", req.NamespacedName.Namespace, "name", req.NamespacedName.Name)
+		log.Error(err, "Failed to get ClientApp resource", "namespace", req.NamespacedName.Namespace, "name", req.NamespacedName.Name)
 		return ctrl.Result{}, err
 	}
+
+	log.V(1).Info("ClientApp resource fetched successfully", "name", clientApp.Name, "namespace", clientApp.Namespace)
+
+	clientApp.Spec.LastUpdated = metav1.Now()
 
 	// Get deployment from the same namespace as the clientApp CR.
 	deployment := &appsv1.Deployment{}
@@ -77,14 +81,18 @@ func (r *ClientAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Define and create a new deployment.
-			log.Info("clientApp deployment not found, creating", "name", clientApp.Name, "namespace", clientApp.Namespace)
+			log.Info("ClientApp deployment not found, creating", "name", clientApp.Name, "namespace", clientApp.Namespace)
 			dep := r.clientAppDeployment(clientApp)
 			if err = r.Create(ctx, dep); err != nil {
 				log.Error(err, "Failed to create deployment for clientApp", "namespace", req.NamespacedName.Namespace, "name", req.NamespacedName.Name)
 				return ctrl.Result{}, err
 			}
+			log.Info("New deployment created for ClientApp", "name", clientApp.Name, "namespace", clientApp.Namespace)
+			clientApp.Spec.LastUpdated = metav1.Now()
+			// Spec updated - return and requeue
 			return ctrl.Result{Requeue: true}, nil
 		} else {
+			log.Error(err, "Failed to get Deployment for ClientApp", "namespace", clientApp.Namespace, "name", clientApp.Name)
 			return ctrl.Result{}, err
 		}
 	}
@@ -92,10 +100,11 @@ func (r *ClientAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	// Check if the replica count matches the CR.
 	replicas := clientApp.Spec.Replicas
 	if *deployment.Spec.Replicas != replicas {
+		log.Info("Updating deployment replica count", "old_replicas", *deployment.Spec.Replicas, "new_replicas", clientApp.Spec.Replicas)
 		deployment.Spec.Replicas = &replicas
 		err = r.Update(ctx, deployment)
 		if err != nil {
-			log.Error(err, "Failed to update Deployment", "Deployment.Namespace", deployment.Namespace, "Deployment.Name", deployment.Name)
+			log.Error(err, "Failed to update Deployment replica count", "namespace", deployment.Namespace, "name", deployment.Name)
 			return ctrl.Result{}, err
 		}
 
@@ -103,10 +112,9 @@ func (r *ClientAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			log.Error(err, "Failed to update ClientApp status after replica change", "namespace", clientApp.Namespace, "name", clientApp.Name)
 			return ctrl.Result{}, err
 		}
+		clientApp.Spec.LastUpdated = metav1.Now()
+		log.Info("Updated ClientApp status with new replica count", "replicas", replicas)
 
-		log.Info("Updated clientApp status with new replica count", "replicas", replicas)
-
-		// Spec updated - return and requeue
 		return ctrl.Result{Requeue: true}, nil
 	}
 
@@ -134,6 +142,8 @@ func (r *ClientAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "Failed to update ClientApp status", "namespace", clientApp.Namespace, "name", clientApp.Name)
 		return ctrl.Result{}, err // Returning an error will make sure the request is requeued for another try
 	}
+
+	log.V(1).Info("Reconciliation completed for ClientApp", "namespace", clientApp.Namespace, "name", clientApp.Name)
 
 	return ctrl.Result{}, nil
 }
